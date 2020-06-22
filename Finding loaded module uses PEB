@@ -1,0 +1,52 @@
+#include <stdio.h>
+#include <Windows.h>
+#include <winternl.h>
+
+
+
+
+int main(int argc, CHAR* argv[]) {
+	HANDLE ProcHandle;
+	typedef LONG(WINAPI NTQIP)(HANDLE, PROCESSINFOCLASS, PVOID, ULONG, PULONG);
+	HANDLE HNtdll;
+	NTQIP* lpfnNtQueryInformationProcess;
+	PROCESS_BASIC_INFORMATION PBI;
+	DWORD PLdrEntry;
+	DWORD PLdrFlink;
+	DWORD DSize;
+	printf("Checking PEB Program!\n");
+	ProcHandle = GetCurrentProcess();
+	HNtdll = GetModuleHandle(L"ntdll.dll");
+	lpfnNtQueryInformationProcess = (NTQIP*) GetProcAddress(HNtdll, "NtQueryInformationProcess");
+	printf("lpfnNtQueryInformationProcess address: %p\n", lpfnNtQueryInformationProcess);
+	(*lpfnNtQueryInformationProcess) (ProcHandle, ProcessBasicInformation, &PBI, sizeof(PBI), &DSize);
+	printf("InOrderModuleList: %p\n", PBI.PebBaseAddress->Ldr->InMemoryOrderModuleList.Flink);
+	PLdrEntry = ((DWORD)(PBI.PebBaseAddress->Ldr->InMemoryOrderModuleList.Flink) - 0x8);
+	printf("Full Name: %wZ\n", (LPWSTR)(PLdrEntry + 0x24));
+	printf("Base Name: %wZ\n", (LPWSTR)(PLdrEntry + 0x2c));
+	printf("Base Address: 0x%p\n", *(LPDWORD)(PLdrEntry + 0x18));
+	
+	//*****************************
+
+	PLdrFlink = (DWORD) * (LPDWORD)(PLdrEntry + 0x8);
+	printf("Next Link: %p", PLdrFlink);
+	printf("Next File Loading.....\n");
+	PLdrEntry = PLdrFlink - 0x8;
+	printf("Full Name: %wZ\n", (LPWSTR)(PLdrEntry + 0x24));
+	printf("Base Name: %wZ\n", (LPWSTR)(PLdrEntry + 0x2c));
+	printf("Base Address: 0x%p\n",  * (LPDWORD) (PLdrEntry + 0x18));
+
+
+	/*******************************/
+
+	PLdrFlink = (DWORD) * (LPDWORD)(PLdrEntry + 0x8);
+	printf("Next Link: %p", PLdrFlink);
+	printf("Next File Loading.....\n");
+	PLdrEntry = PLdrFlink - 0x8;
+	printf("Full Name: %wZ\n", (LPWSTR)(PLdrEntry + 0x24));
+	printf("Base Name: %wZ\n", (LPWSTR)(PLdrEntry + 0x2c));
+	printf("Base Address: 0x%p\n", *(LPDWORD)(PLdrEntry + 0x18));
+
+	/***************************/
+	return 0;
+}
