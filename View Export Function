@@ -1,0 +1,32 @@
+#include <stdio.h>
+#include <Windows.h>
+
+int main(int argc, LPTSTR argv[]) {
+    LPVOID LPBaseAddress;
+    PIMAGE_DOS_HEADER LPDOSHeader;
+    PIMAGE_NT_HEADERS LPNTHeader;
+    PIMAGE_EXPORT_DIRECTORY LPExportDirectory;
+    DWORD DWNumberOfNames;
+    DWORD DWCount;
+    LPDWORD LPAddressOfName;
+    LPSTR FunctioName;
+    printf("Welcome to Export function checking program!..\n");
+    LPBaseAddress = LoadLibrary(argv[1]);
+    LPDOSHeader = (PIMAGE_DOS_HEADER)LPBaseAddress;
+    LPNTHeader = (PIMAGE_NT_HEADERS)((DWORD)LPBaseAddress + LPDOSHeader->e_lfanew);
+    printf("NT Header Address: %p\n", LPNTHeader);
+    printf("Export Directory OffSet: %X\n",LPNTHeader->OptionalHeader.DataDirectory[0].VirtualAddress);
+    printf("Export Directory Size: %X\n", LPNTHeader->OptionalHeader.DataDirectory[0].Size);
+    LPExportDirectory = (PIMAGE_EXPORT_DIRECTORY)((DWORD)LPBaseAddress + (DWORD)LPNTHeader->OptionalHeader.DataDirectory[0].VirtualAddress);
+    printf("%X\n", LPExportDirectory);
+    printf("Searching for export function of %s library!\n", ((DWORD)LPBaseAddress + (DWORD)LPExportDirectory->Name));
+    DWNumberOfNames = LPExportDirectory->NumberOfNames;
+    printf("Number of Export Functions: 0x%X\n", DWNumberOfNames);
+    LPAddressOfName = ((DWORD)LPBaseAddress + (DWORD)LPExportDirectory->AddressOfNames);
+    for (DWCount = 0; DWCount < DWNumberOfNames; DWCount++) {
+        if ((FunctioName = (LPSTR)((DWORD)LPBaseAddress + *LPAddressOfName++)) != NULL) {
+            printf("%s\n", FunctioName);
+        }
+    }
+    return 0;
+}
