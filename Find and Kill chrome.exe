@@ -1,0 +1,38 @@
+#include <stdio.h>
+#include <Windows.h>
+#include <tchar.h>
+#include <tlhelp32.h>
+
+
+
+
+
+int main(int argc, CHAR* argv[]) {
+	HANDLE HProcessSnapshot;
+	PROCESSENTRY32 ProcessEntry;
+	ProcessEntry.dwSize = sizeof(PROCESSENTRY32);
+	while (TRUE) {
+		HProcessSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+		if (NULL == HProcessSnapshot) {
+			printf("Could not Create Snapshot! Error Code: %d\n", GetLastError());
+		}
+		if (Process32First(HProcessSnapshot, &ProcessEntry)) {
+			printf("First process: %ws\n", ProcessEntry.szExeFile);
+		}
+		while (Process32Next(HProcessSnapshot, &ProcessEntry)) {
+			printf("Next Process: %ws\n", ProcessEntry.szExeFile);
+			printf("Process ID: %d\n", ProcessEntry.th32ProcessID);
+			if (_tcsstr(ProcessEntry.szExeFile, _T("chrome.exe"))) {
+				printf("Killing Chrome.exe...");
+				Sleep(1000);
+				printf(".");
+				HANDLE HChrome = OpenProcess(PROCESS_TERMINATE, 0, ProcessEntry.th32ProcessID);
+				if (HChrome != NULL) {
+					TerminateProcess(HChrome, EXIT_SUCCESS);
+				}
+			}
+		}
+		CloseHandle(HProcessSnapshot);
+	}
+	return 0;
+}
