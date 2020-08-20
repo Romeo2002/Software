@@ -1,0 +1,43 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include <Windows.h>
+#include <string.h>
+#include <iostream>
+
+
+int main(int argc, char** argv) {
+	char filename[] = "F:\\Malware\\adobeupdate.dat";
+	unsigned int Filesize;
+	DWORD ByteReaded;
+	FILE* FileHandle;
+	HANDLE ReadFileHandle;
+	FileHandle = fopen(filename, "r");
+	if (FileHandle != 0) {
+		fseek(FileHandle, 0, 2);
+		Filesize = ftell(FileHandle);
+		printf("Size of adobeupdate.dat is: 0x%x\n", Filesize);
+	}
+	else {
+		printf("Cannot open this file!\n");
+	}
+	LPVOID Lpbuffer = operator new(Filesize);
+	memset(Lpbuffer, 0, Filesize);
+	ReadFileHandle = CreateFileA(filename, GENERIC_READ, 1, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+	ReadFile(ReadFileHandle, Lpbuffer, Filesize, &ByteReaded, 0);
+	char * cp_Lpbuffer = (char * ) Lpbuffer;
+	unsigned int KeyLength = strlen((const char *) Lpbuffer);
+	char* new_Lpbuffer = (char*)Lpbuffer + KeyLength + 1;
+	printf("Keylength: 0x%x\n", KeyLength);
+	unsigned int DataLength = Filesize - KeyLength - 1;
+	printf("Data Length: 0x%x\n", DataLength);
+	LPVOID Payload = LocalAlloc(LMEM_ZEROINIT, DataLength + 1);
+	for (int counter = 0; counter < DataLength; counter++) {
+		*((BYTE*)Payload + counter) = *((BYTE*)new_Lpbuffer + counter);
+		*((BYTE*)Payload + counter) = *((BYTE*)Payload + counter) ^ cp_Lpbuffer[counter % KeyLength];
+	}
+	FILE* LastPayload = fopen("F:\\Malware\\plugx.dll", "wb");
+	fwrite(Payload, 1, DataLength, LastPayload);
+	CloseHandle(ReadFileHandle);
+	fclose(FileHandle);
+	fclose(LastPayload);
+	return 0;
+}
