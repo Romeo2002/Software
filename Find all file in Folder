@@ -1,0 +1,70 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include <Windows.h>
+#include <psapi.h>
+#include <stdio.h>
+
+int FindAllFile(LPCWSTR Filename) {
+	WIN32_FIND_DATAW Filedata;
+	HANDLE ResHandle;
+	printf("Searching files in %ws\n", Filename);
+
+	ResHandle = FindFirstFileW(Filename, &Filedata);
+	if (ResHandle == INVALID_HANDLE_VALUE) {
+		printf("Error: %d\n", GetLastError());
+		return 0;
+	}
+
+	if ((wcscmp(Filedata.cFileName, L".")) && (wcscmp(Filedata.cFileName, L".."))) {
+		if (Filedata.dwFileAttributes == FILE_ATTRIBUTE_DIRECTORY) 
+		{
+			WCHAR NewPath[1024];
+			lstrcpyW(NewPath, Filename);
+			LPWSTR LpBackLash = wcsrchr(NewPath, L'*');
+			if (LpBackLash != nullptr) 
+				{
+					*LpBackLash = 0;
+				}
+			wcscat(NewPath, Filedata.cFileName);
+			wcscat(NewPath, L"\\*");
+			FindAllFile(NewPath);
+		}
+		else
+		{	
+				printf("%ws\n", Filedata.cFileName);
+		}
+	}
+
+
+	while (FindNextFileW(ResHandle, &Filedata)) {
+		if ((wcscmp(Filedata.cFileName, L".")) && (wcscmp(Filedata.cFileName, L".."))) 
+		{
+			if (Filedata.dwFileAttributes == FILE_ATTRIBUTE_DIRECTORY) {
+				WCHAR NewPath[1024];
+				lstrcpyW(NewPath, Filename);
+				LPWSTR LpBackLash = wcsrchr(NewPath, L'*');
+					if (LpBackLash != nullptr)
+					{
+						*LpBackLash = 0;
+					}
+				wcscat(NewPath, Filedata.cFileName);
+				wcscat(NewPath, L"\\*");
+				FindAllFile(NewPath);
+			}
+			else
+				{
+				printf("%ws\n", Filedata.cFileName);
+				}
+		}
+	}
+	return 0;
+}
+
+
+int main(void) {
+
+	LPCWSTR Name = L"E:\\Book\\*";
+	FindAllFile(Name);
+
+	getchar();
+	return 0;
+}
