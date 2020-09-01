@@ -1,0 +1,30 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include <Windows.h>
+#include <stdio.h>
+
+
+
+
+
+int main(void) {
+	STORAGE_PROPERTY_QUERY InBuffer;
+	STORAGE_DEVICE_DESCRIPTOR OutBuffer;
+	DWORD BytesReturned;
+	DWORD BusType_Res;
+
+	HANDLE hDevice = CreateFileW(L"\\\\.\\H:", 0, 3u, 0, 3u, 0, 0);
+	if (INVALID_HANDLE_VALUE == hDevice) {
+		printf("Could not read this device\n");
+		return 0;
+	}
+	memset(&InBuffer, 0, 12);
+	DeviceIoControl(hDevice, 0x2D1400u, &InBuffer, 0xCu, &OutBuffer, 0x28u, &BytesReturned, 0);
+	
+	BusType_Res = OutBuffer.BusType;
+    CloseHandle(hDevice);
+
+	printf("Bus Type: %d\n", BusType_Res);
+
+	getchar();
+	return 0;
+}
