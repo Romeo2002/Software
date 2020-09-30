@@ -1,0 +1,54 @@
+#include <iostream>
+#include <fstream>
+#include <string>
+
+
+using namespace std;
+
+int main(int argc, char* argv[]) {
+
+	if (argc == 3) {
+		ifstream hInputFile;
+		ofstream hOutFile;
+		string line;
+		size_t domainPoshttp;
+		size_t domainPoshttps;
+		size_t slashPos;
+
+		hInputFile.open(argv[1]);
+		hOutFile.open(argv[2]);
+		while (hInputFile.is_open() && !hInputFile.eof()) {
+			getline(hInputFile, line);
+			domainPoshttp = line.find("http://", 0);
+			if (domainPoshttp != string::npos) {
+				slashPos = line.find_first_of("/\"", domainPoshttp + strlen("http://"));
+				for (size_t i = domainPoshttp + strlen("http://"); i < slashPos; ++i) {
+					hOutFile << line.at(i);
+					cout << line.at(i);
+				}
+				hOutFile << endl;
+				cout << endl;
+			} else 
+			{
+			domainPoshttps = line.find("https://", 0);
+			if (domainPoshttps != string::npos) {
+				slashPos = line.find_first_of("/\"", domainPoshttps + strlen("https://"));
+				for (size_t i = domainPoshttps + strlen("https://"); i < slashPos; ++i) {
+					hOutFile << line.at(i);
+					cout << line.at(i);
+				}
+				hOutFile << endl;
+				cout << endl;
+			}
+			}
+		}
+		hInputFile.close();
+		hOutFile.close();
+	}
+	else {
+		printf("Using extractdomain.exe inputfilename outputfilename\n");
+		return 1;
+	}
+cout << "Extract domain successfully!" << endl;
+return 0;
+}
